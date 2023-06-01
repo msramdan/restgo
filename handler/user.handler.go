@@ -49,7 +49,6 @@ func UserHandlerGetAll(ctx *fiber.Ctx) error {
 }
 
 func UserHandlerCreate(ctx *fiber.Ctx) error {
-	// get dt raw body
 	p := new(request.UserCreateRequest)
 	if err := ctx.BodyParser(p); err != nil {
 		return err
@@ -96,6 +95,47 @@ func UserHandlerGetById(ctx *fiber.Ctx) error {
 	return ctx.Status(200).JSON(fiber.Map{
 		"status": "success",
 		"data":   users,
+	})
+}
+
+func UserHandlerUpdate(ctx *fiber.Ctx) error {
+	// cek data ada / tidak
+	userId := ctx.Params("id")
+	var user entity.User
+	result := database.DB.Debug().First(&user, "id = ?", userId)
+	if result.Error != nil {
+		return ctx.Status(400).JSON(fiber.Map{
+			"status": "failed",
+			"data":   result.Error.Error(),
+		})
+	}
+	// parsing raw json
+	p := new(request.UserCreateRequest)
+	if err := ctx.BodyParser(p); err != nil {
+		return err
+	}
+	errors := ValidateStruct(*p)
+	if errors != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"status": "failed",
+			"data":   errors,
+		})
+
+	}
+	user.Name = p.Name
+	user.Email = p.Email
+	user.Address = p.Address
+	user.Phone = p.Phone
+	updateData := database.DB.Debug().Save(&user)
+	if updateData.Error != nil {
+		return ctx.Status(400).JSON(fiber.Map{
+			"status": "failed",
+			"data":   result.Error.Error(),
+		})
+	}
+	return ctx.Status(200).JSON(fiber.Map{
+		"status": "success",
+		"data":   user,
 	})
 }
 
