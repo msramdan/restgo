@@ -17,7 +17,7 @@ type ErrorResponse struct {
 
 var validate = validator.New()
 
-func ValidateStruct(p request.UserCreateRequest) []*ErrorResponse {
+func ValidateStruct(p request.UserRequest) []*ErrorResponse {
 	var errors []*ErrorResponse
 	err := validate.Struct(p)
 	if err != nil {
@@ -49,9 +49,12 @@ func UserHandlerGetAll(ctx *fiber.Ctx) error {
 }
 
 func UserHandlerCreate(ctx *fiber.Ctx) error {
-	p := new(request.UserCreateRequest)
+	p := new(request.UserRequest)
 	if err := ctx.BodyParser(p); err != nil {
-		return err
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"status": "failed",
+			"data":   err.Error(),
+		})
 	}
 	// validator
 	errors := ValidateStruct(*p)
@@ -110,9 +113,12 @@ func UserHandlerUpdate(ctx *fiber.Ctx) error {
 		})
 	}
 	// parsing raw json
-	p := new(request.UserCreateRequest)
+	p := new(request.UserRequest)
 	if err := ctx.BodyParser(p); err != nil {
-		return err
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"status": "failed",
+			"data":   err.Error(),
+		})
 	}
 	errors := ValidateStruct(*p)
 	if errors != nil {
